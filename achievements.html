@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏆 Achievements</title>
+  <style>
+    /* Reset & basic styling */
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #8EC5FC, #E0C3FC);
+      color: #333;
+      text-align: center;
+    }
+    header {
+      padding: 40px 20px;
+    }
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+    header p {
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      color: #fff;
+    }
+    .features {
+      padding: 30px 20px;
+    }
+    .features h2 {
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    .btn {
+      display: block;
+      padding: 15px;
+      text-decoration: none;
+      font-weight: bold;
+      background-color: #fff;
+      color: #8EC5FC;
+      border-radius: 12px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: #f0f0f0;
+    }
+    footer {
+      padding: 20px;
+      font-size: 0.9rem;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    .ach-list { max-width: 500px; margin: 30px auto; text-align: left; }
+    .ach-list li { margin-bottom: 12px; font-size: 1.1rem; }
+    .ach-unlocked { color: #4caf50; font-weight: bold; }
+    .ach-locked { color: #aaa; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏆 Achievements / Badges</h1>
+  </header>
+
+  <main>
+    <h2>🎡 Memory Card Matching Game Achievements</h2>
+    <ul class="ach-list" id="memoryAchList"></ul>
+
+    <h2>🎢 Roller Coaster Clicker Game Achievements</h2>
+    <ul class="ach-list" id="clickerAchList"></ul>
+
+    <a href="index.html" class="btn" style="margin-top: 20px;">🏠 Back to Home</a>
+  </main>
+  <script>
+    // --- Memory Achievements ---
+    const memoryAchievements = [
+      { id: 'firstRide', name: 'First Ride Matched', desc: 'Match your first pair of cards.' },
+      { id: 'smoothOperator', name: 'Smooth Operator', desc: 'Complete the game without any mismatches.' },
+      { id: 'fastPass', name: 'Fast Pass', desc: 'Complete the game in under 60 seconds.' },
+      { id: 'lostFound', name: 'Lost and Found', desc: 'Take more than 20 tries to finish.' },
+      { id: 'photoMemory', name: 'Photo Memory', desc: 'Match 3 pairs in a row without a wrong guess.' },
+      { id: 'rideMaster', name: 'Ride Master', desc: 'Finish the game 3 times in a row.' },
+      { id: 'perfectMemory', name: 'Perfect Memory', desc: 'Finish with zero mistakes.' },
+      { id: 'nightShift', name: 'Night Shift', desc: 'Play the game after 10 PM.' },
+      { id: 'themeChampion', name: 'Theme Park Champion', desc: 'Unlock by winning all other memory game achievements.' }
+    ];
+    const state = JSON.parse(localStorage.getItem('memoryAchievements') || '{}');
+    const ul = document.getElementById('memoryAchList');
+    memoryAchievements.forEach(a => {
+      const li = document.createElement('li');
+      const unlocked = state[a.id];
+      li.className = unlocked ? 'ach-unlocked' : 'ach-locked';
+      li.innerHTML = unlocked
+        ? `✅ <b>${a.name}</b> – ${a.desc}`
+        : `⬜ <b>${a.name}</b> – ${a.desc}`;
+      ul.appendChild(li);
+    });
+
+    // --- Clicker Achievements ---
+    const clickerAchievements = [
+      { id: 'ticketHolder', name: 'Ticket Holder', desc: 'Get your first click.' },
+      { id: 'firstRide', name: 'First Ride Launched', desc: 'Reach 100 clicks.' },
+      { id: 'rideOperator', name: 'Ride Operator', desc: 'Reach 1,000 clicks.' },
+      { id: 'fullTrain', name: 'Full Train', desc: 'Unlock your first upgrade.' },
+      { id: 'thrillSeeker', name: 'Thrill Seeker', desc: 'Click 500 times in one session.' },
+      { id: 'fastTrack', name: 'Fast Track', desc: 'Reach 5,000 clicks.' },
+      { id: 'parkExpansion', name: 'Park Expansion', desc: 'Buy 5 upgrades.' },
+      { id: 'coasterTycoon', name: 'Coaster Tycoon', desc: 'Reach 50,000 clicks.' },
+      { id: 'bestPie', name: 'Best Pie Secret', desc: 'Unlock by typing “best pie” in the secret Easter egg.' },
+      { id: 'ultimateOperator', name: 'Ultimate Operator', desc: 'Unlock all clicker game achievements.' }
+    ];
+    const clickerState = JSON.parse(localStorage.getItem('clickerAchievements') || '{}');
+    const clickerUl = document.getElementById('clickerAchList');
+    clickerAchievements.forEach(a => {
+      const li = document.createElement('li');
+      const unlocked = clickerState[a.id];
+      li.className = unlocked ? 'ach-unlocked' : 'ach-locked';
+      li.innerHTML = unlocked
+        ? `✅ <b>${a.name}</b> – ${a.desc}`
+        : `⬜ <b>${a.name}</b> – ${a.desc}`;
+      clickerUl.appendChild(li);
+    });
+  </script>
+</body>
+</html>

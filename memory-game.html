@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎠 Memory Ride Game</title>
+  <style>
+    /* Reset & basic styling */
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #8EC5FC, #E0C3FC);
+      color: #333;
+      text-align: center;
+    }
+    header {
+      padding: 40px 20px;
+    }
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+    header p {
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      color: #fff;
+    }
+    .features {
+      padding: 30px 20px;
+    }
+    .features h2 {
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    .btn {
+      display: block;
+      padding: 15px;
+      text-decoration: none;
+      font-weight: bold;
+      background-color: #fff;
+      color: #8EC5FC;
+      border-radius: 12px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: #f0f0f0;
+    }
+    footer {
+      padding: 20px;
+      font-size: 0.9rem;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    /* --- page-specific styles below --- */
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      background: #f0f8ff;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(4, 80px); grid-gap: 10px; }
+    .card {
+      width: 80px; height: 80px; background: #444; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; cursor: pointer; border-radius: 8px;
+      user-select: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .flipped, .matched {
+      background: #fff; color: #000;
+      cursor: default;
+    }
+    .matched {
+      background: #b2ffb2;
+    }
+    #score { margin-top: 20px; font-size: 1.2rem; }
+    #level { margin-top: 10px; font-size: 1.1rem; }
+    .btn { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>🎠 Memory Ride Game</h1>
+  <div id="level">Level: 1</div>
+  <div class="grid" id="grid"></div>
+  <div id="score">Matches: 0</div>
+  <button id="resetLevel" class="btn" style="margin-bottom:10px;">Reset to Level 1</button>
+  <a href="index.html" class="btn">🏠 Back to Home</a>
+
+  <script>
+    // Pool of emojis to use for up to 10 levels (40 pairs max)
+    const allEmojis = [
+      "🎢","🎡","🚗","🐴","🎠","🚂","🚁","🚤","🚲","🛴",
+      "🛹","🛶","🛥️","🚀","🛸","🚓","🚑","🚒","🚚","🚜",
+      "🦄","🐲","🐬","🐧","🦖","🦕","🐘","🐼","🦁","🐵",
+      "🐻","🐨","🐯","🦊","🐸","🐔","🐦","🐤","🦋","🐞"
+    ];
+    const jokerEmoji = "🃏";
+
+    let grid = document.getElementById('grid');
+    let scoreDisplay = document.getElementById('score');
+    let levelDisplay = document.getElementById('level');
+    let firstCard = null, secondCard = null;
+    let lockBoard = false;
+    let matches = 0;
+    let level = parseInt(localStorage.getItem('memoryLevel')) || 1;
+    let pairsPerLevel = 4;
+    let cards = [];
+    let matchedCount = 0;
+    let shuffleInterval = null;
+
+    // --- Achievements ---
+    const achievements = [
+      { id: 'firstRide', name: 'First Ride Matched', desc: 'Match your first pair of cards.' },
+      { id: 'smoothOperator', name: 'Smooth Operator', desc: 'Complete the game without any mismatches.' },
+      { id: 'fastPass', name: 'Fast Pass', desc: 'Complete the game in under 60 seconds.' },
+      { id: 'lostFound', name: 'Lost and Found', desc: 'Take more than 20 tries to finish.' },
+      { id: 'photoMemory', name: 'Photo Memory', desc: 'Match 3 pairs in a row without a wrong guess.' },
+      { id: 'rideMaster', name: 'Ride Master', desc: 'Finish the game 3 times in a row.' },
+      { id: 'perfectMemory', name: 'Perfect Memory', desc: 'Finish with zero mistakes.' },
+      { id: 'nightShift', name: 'Night Shift', desc: 'Play the game after 10 PM.' },
+      { id: 'themeChampion', name: 'Theme Park Champion', desc: 'Unlock by winning all other memory game achievements.' }
+    ];
+    let achievementState = JSON.parse(localStorage.getItem('memoryAchievements') || '{}');
+    let sessionMistakes = 0;
+    let sessionTries = 0;
+    let sessionStreak = 0;
+    let sessionStart = Date.now();
+    let sessionGames = 0;
+    let sessionPerfect = true;
+    let sessionRowStreak = 0;
+    let lastWasMatch = false;
+    let lastGameMistakes = 0;
+
+    function unlockAchievement(id) {
+      if (!achievementState[id]) {
+        achievementState[id] = true;
+        localStorage.setItem('memoryAchievements', JSON.stringify(achievementState));
+        const ach = achievements.find(a => a.id === id);
+        if (ach) {
+          showAchievementPopup(ach.name, ach.desc);
+        }
+        // Check for Theme Park Champion
+        if (id !== 'themeChampion' && achievements.filter(a => a.id !== 'themeChampion').every(a => achievementState[a.id])) {
+          unlockAchievement('themeChampion');
+        }
+      }
+    }
+
+    function showAchievementPopup(title, desc) {
+      let popup = document.createElement('div');
+      popup.style.position = 'fixed';
+      popup.style.bottom = '30px';
+      popup.style.right = '30px';
+      popup.style.background = '#222';
+      popup.style.color = '#fff';
+      popup.style.padding = '18px 28px';
+      popup.style.borderRadius = '12px';
+      popup.style.boxShadow = '0 4px 16px rgba(0,0,0,0.3)';
+      popup.style.zIndex = 99999;
+      popup.style.fontSize = '1.1rem';
+      popup.innerHTML = `<b>🏆 Achievement Unlocked!</b><br>${title}<br><span style="font-size:0.9rem;">${desc}</span>`;
+      document.body.appendChild(popup);
+      setTimeout(() => popup.remove(), 3500);
+    }
+
+    // Night Shift
+    if (new Date().getHours() >= 22) unlockAchievement('nightShift');
+
+    function shuffle(array) {
+      for(let i=array.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function getEmojisForLevel(level) {
+      const numPairs = level <= 10 ? pairsPerLevel * level : pairsPerLevel * 10;
+      const emojis = shuffle([...allEmojis]).slice(0, numPairs);
+      let cardsArr = [...emojis, ...emojis];
+      cardsArr.push(jokerEmoji);
+      return shuffle(cardsArr);
+    }
+
+    function flipCard(e) {
+      if (lockBoard) return;
+      const card = e.target;
+      if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      if (card === firstCard) return;
+
+      card.classList.add('flipped');
+      card.textContent = card.dataset.emoji;
+
+      if (!firstCard) {
+        firstCard = card;
+      } else {
+        secondCard = card;
+        lockBoard = true;
+        setTimeout(checkMatch, 700);
+      }
+    }
+
+    function checkMatch() {
+      sessionTries++;
+      // Joker never matches anything, including itself
+      if (
+        firstCard.dataset.emoji === jokerEmoji ||
+        secondCard.dataset.emoji === jokerEmoji ||
+        firstCard.dataset.emoji !== secondCard.dataset.emoji
+      ) {
+        sessionMistakes++;
+        sessionRowStreak = 0;
+        sessionPerfect = false;
+        firstCard.classList.remove('flipped');
+        secondCard.classList.remove('flipped');
+        firstCard.textContent = "";
+        secondCard.textContent = "";
+        lastWasMatch = false;
+      } else {
+        firstCard.classList.add('matched');
+        secondCard.classList.add('matched');
+        matchedCount += 2;
+        matches++;
+        scoreDisplay.textContent = 'Matches: ' + matches;
+        // First Ride Matched
+        if (!achievementState['firstRide']) unlockAchievement('firstRide');
+        // Photo Memory: 3 pairs in a row without a wrong guess
+        if (lastWasMatch) sessionRowStreak++; else sessionRowStreak = 1;
+        if (sessionRowStreak === 3) unlockAchievement('photoMemory');
+        lastWasMatch = true;
+      }
+      // Check for level completion (all pairs matched except joker)
+      if (document.querySelectorAll('.matched').length === cards.length - 1) {
+        if (shuffleInterval) {
+          clearInterval(shuffleInterval);
+          shuffleInterval = null;
+        }
+        setTimeout(() => {
+          // Fast Pass: under 60 seconds
+          if ((Date.now() - sessionStart) < 60000) unlockAchievement('fastPass');
+          // Lost and Found: more than 20 tries
+          if (sessionTries > 20) unlockAchievement('lostFound');
+          // Smooth Operator: no mismatches
+          if (sessionMistakes === 0) unlockAchievement('smoothOperator');
+          // Perfect Memory: zero mistakes
+          if (sessionMistakes === 0) unlockAchievement('perfectMemory');
+          // Ride Master: finish 3 times in a row
+          if (lastGameMistakes === 0 && sessionMistakes === 0) sessionGames++; else sessionGames = 1;
+          if (sessionGames === 3) unlockAchievement('rideMaster');
+          lastGameMistakes = sessionMistakes;
+          nextLevel();
+        }, 1000);
+      }
+      [firstCard, secondCard, lockBoard] = [null, null, false];
+    }
+
+    function nextLevel() {
+      level++;
+      localStorage.setItem('memoryLevel', level);
+      createBoard();
+    }
+
+    function createBoard() {
+      localStorage.setItem('memoryLevel', level);
+      grid.innerHTML = '';
+      cards = [];
+      matchedCount = 0;
+      scoreDisplay.textContent = 'Matches: 0';
+      levelDisplay.textContent = 'Level: ' + level;
+      let emojis = getEmojisForLevel(level);
+
+      // Reset session stats for new game
+      sessionMistakes = 0;
+      sessionTries = 0;
+      sessionRowStreak = 0;
+      sessionPerfect = true;
+      sessionStart = Date.now();
+
+      // Adjust grid columns for more cards
+      let columns = Math.ceil(Math.sqrt(emojis.length));
+      grid.style.gridTemplateColumns = `repeat(${columns}, 80px)`;
+
+      emojis.forEach((emoji, idx) => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.emoji = emoji;
+        card.dataset.index = idx;
+        card.textContent = ""; // Face down
+        card.addEventListener('click', flipCard);
+        grid.appendChild(card);
+        cards.push(card);
+      });
+
+      // Start shuffling tiles for levels 11-15
+      if (level > 10 && level <= 15) {
+        if (shuffleInterval) clearInterval(shuffleInterval);
+        shuffleInterval = setInterval(shuffleTiles, 2000);
+      } else if (shuffleInterval) {
+        clearInterval(shuffleInterval);
+        shuffleInterval = null;
+      }
+    }
+
+    function shuffleTiles() {
+      // Only shuffle unmatched and unflipped cards
+      const cardElements = Array.from(grid.children);
+      const toShuffle = cardElements.filter(card =>
+        !card.classList.contains('matched') && !card.classList.contains('flipped')
+      );
+      // Shuffle their positions in the DOM
+      for (let i = toShuffle.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        grid.insertBefore(toShuffle[j], toShuffle[i]);
+      }
+    }
+
+    // Reset to Level 1 button
+    document.getElementById('resetLevel').addEventListener('click', () => {
+      if (confirm('Reset to Level 1? This will restart your progress.')) {
+        level = 1;
+        localStorage.setItem('memoryLevel', level);
+        createBoard();
+      }
+    });
+
+    // On load
+    createBoard();
+  </script>
+</body>
+</html>

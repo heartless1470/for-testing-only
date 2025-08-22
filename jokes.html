@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>😂 Funny Jokes - East Pie</title>
+  <style>
+    /* Reset & basic styling */
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #8EC5FC, #E0C3FC);
+      color: #333;
+      text-align: center;
+    }
+    header {
+      padding: 40px 20px;
+    }
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+    header p {
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      color: #fff;
+    }
+    .features {
+      padding: 30px 20px;
+    }
+    .features h2 {
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    .btn {
+      display: block;
+      padding: 15px;
+      text-decoration: none;
+      font-weight: bold;
+      background-color: #fff;
+      color: #8EC5FC;
+      border-radius: 12px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: #f0f0f0;
+    }
+    footer {
+      padding: 20px;
+      font-size: 0.9rem;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>😂 Funny Jokes</h1>
+    <p>Take a break and laugh with some silly jokes from your East Pie friends!</p>
+  </header>
+
+  <main>
+    <div class="joke-container" style="display: flex; flex-direction: column; align-items: center;">
+      <p id="joke">Click the button to see a joke!</p>
+      <button id="nextJoke" class="btn">Next Joke 😂</button>
+    </div>
+    <a href="index.html" class="btn" style="margin-top: 20px;">🏠 Back to Home</a>
+  </main>
+
+  <script>
+    // script.js - shared JS for your site
+    console.log("East Pie site loaded");
+
+    const jokes = [
+      "Why did the roller coaster get a promotion? Because it was on a roll!",
+      "Why did the scarecrow become a ride operator? He was outstanding in his field!",
+      "Why don't amusement park workers ever get lost? They always follow the ride signs!",
+      "Why did the employee bring a ladder to work? Because they wanted to reach new heights!",
+      "Why did the ride operator sit on a clock? Because they wanted to make time fly!",
+      "Why did the roller coaster break up with the Ferris wheel? It needed some space!",
+      "Why did the roller coaster go to therapy? It had too many ups and downs!",
+      "Why did the coaster operator bring a notebook? To keep track of all the twists and turns!",
+      "Why did the bumper car win an award? Because it was outstanding in collisions!",
+      "Why did the roller coaster get a job at the bakery? Because it loves loops!",
+      "Why did the ride operator take a nap? They needed to recharge their thrill batteries!",
+      "Why did the roller coaster take music lessons? To improve its loops!",
+      "Why did the carousel horse quit? It felt like it was going in circles!",
+      "Why did the roller coaster blush? It saw the Ferris wheel spinning around!",
+      "Why was the roller coaster good at math? It knows how to handle curves!",
+      "Why did the roller coaster go to school? To improve its drop in grades!",
+      "Why was the Ferris wheel always calm? It knew how to keep its spin together!",
+      "Why did the haunted house hire a new operator? It needed some boos!",
+      "Why did the roller coaster go to the doctor? It was feeling a little looped out!",
+      "Why did the roller coaster join a band? It loves thrilling notes!",
+      "Why was the coaster always punctual? It hates waiting in line!",
+      "Why did the roller coaster eat lunch alone? It didn’t want any ups and downs at the table!",
+      "Why did the ride operator bring a flashlight? In case things got too dark!",
+      "Why did the roller coaster take a vacation? It needed a break from all the loops!",
+      "Why did the Ferris wheel get promoted? It really knows how to handle high positions!",
+      "Why did the bumper cars form a band? Because they love crashes!",
+      "Why did the roller coaster win the award? It had the best twists and turns!",
+      "Why did the carousel horse refuse dessert? It was already full of loops!",
+      "Why did the roller coaster call in sick? It needed a day to unwind!",
+      "Why did the ride operator carry a map? To avoid being on the wrong track!",
+      "Why did the roller coaster become a motivational speaker? It knows how to lift people up!",
+      "Why did the roller coaster get in trouble? Too many loop-de-loops!",
+      "Why did the Ferris wheel become a counselor? It gives great perspectives!",
+      "Why did the roller coaster visit the gym? To work on its core loops!",
+      "Why did the ride operator join the choir? They love high notes!",
+      "Why did the roller coaster blush at the Ferris wheel? It got caught spinning!",
+      "Why did the roller coaster become a comedian? It knows how to take people for a ride!",
+      "Why did the carousel horse apply for college? To study circular logic!",
+      "Why did the roller coaster stay home on Mondays? It hates the ups and downs of the week!",
+      "Why did the ride operator bring a whistle? To keep things on track!",
+      "Why did the roller coaster start painting? It loves loops of color!",
+      "Why did the roller coaster get a smartphone? To keep up with all the twists!",
+      "Why did the coaster operator bring a hat? To handle the loops in style!",
+      "Why did the Ferris wheel feel dizzy? Too many spinning coworkers!",
+      "Why did the roller coaster start a blog? To share thrilling stories!",
+      "Why did the roller coaster get a clock? To time the drops perfectly!",
+      "Why did the roller coaster study physics? To master gravity!",
+      "Why did the bumper cars join a race? To show off their skills!",
+      "Why did the roller coaster get glasses? To see the loops more clearly!",
+      "Why did the roller coaster write a diary? To record all the highs and lows!"
+    ];
+
+    const jokeText = document.getElementById('joke');
+    const nextBtn = document.getElementById('nextJoke');
+
+    function getRandomJoke() {
+      const randomIndex = Math.floor(Math.random() * jokes.length);
+      return jokes[randomIndex];
+    }
+
+    nextBtn.addEventListener('click', () => {
+      jokeText.textContent = getRandomJoke();
+    });
+
+    // Optional: track achievements for reading jokes
+    if (localStorage.getItem('badges')) {
+      const badges = JSON.parse(localStorage.getItem('badges'));
+      const jokeBadge = badges.find(b => b.id === 'readJokes');
+      if (jokeBadge) jokeBadge.earned = true;
+      localStorage.setItem('badges', JSON.stringify(badges));
+    }
+  </script>
+</body>
+</html>

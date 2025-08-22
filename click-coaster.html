@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎢 Roller Coaster Clicker</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(to bottom, #87ceeb, #ffffff);
+  }
+  #coaster {
+    font-size: 80px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+  }
+  #coaster:active {
+    transform: scale(1.2) rotate(15deg);
+  }
+  .btn {
+    margin: 10px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    border: 2px solid #444;
+    font-weight: bold;
+  }
+  #fireworks {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .top-left {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    margin: 0;
+    z-index: 10000;
+  }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="btn top-left">🏠 Back to Home</a>
+<h1>🎢 Roller Coaster Clicker</h1>
+<div id="score">Rides Completed: 0</div>
+<div id="coaster">🎢</div>
+
+<h2>Upgrades</h2>
+<button id="multiplier" class="btn">Double Clicks (Cost: 50)</button>
+<button id="autoClicker" class="btn">Auto-Ride (Cost: 100)</button>
+<button id="tripleClick" class="btn">Triple Clicks (Cost: 500)</button>
+<button id="megaClick" class="btn">Mega Clicks (Cost: 2000)</button>
+<button id="superAuto" class="btn">Super Auto-Ride (Cost: 5000)</button>
+<button id="ultraClick" class="btn">Ultra Clicks (Cost: 20000)</button>
+<button id="ultraAuto" class="btn">Ultra Auto-Ride (Cost: 50000)</button>
+
+<button id="prestigeBtn" class="btn" style="background:#ffe0e0; color:#b00; border-color:#b00;">Prestige: Reset Rides, Keep Upgrades, +1 Permanent Click Power</button>
+
+<div id="prestigeInfo" style="margin: 10px 0; font-weight: bold; color: #b00;"></div>
+<div id="upgradesOwned" style="margin:30px 0 10px 0; font-weight:bold;"></div>
+
+<div style="margin-top:40px; text-align:left; max-width:400px; margin-left:auto; margin-right:auto;">
+  <h3>Upgrade List</h3>
+  <ul style="font-size:1rem; color:#222;">
+    <li><b>Double Clicks:</b> Doubles your click power (stacks multiplicatively).</li>
+    <li><b>Triple Clicks:</b> Triples your click power (stacks multiplicatively).</li>
+    <li><b>Mega Clicks:</b> Multiplies click power by 5 (stacks multiplicatively).</li>
+    <li><b>Ultra Clicks:</b> Multiplies click power by 10 (stacks multiplicatively).</li>
+    <li><b>Auto-Ride:</b> +1 auto ride per second (stacks additively).</li>
+    <li><b>Super Auto-Ride:</b> +10 auto rides per second (stacks additively).</li>
+    <li><b>Ultra Auto-Ride:</b> +50 auto rides per second (stacks additively).</li>
+  </ul>
+</div>
+
+<canvas id="fireworks"></canvas>
+
+<script>
+let score = parseInt(localStorage.getItem('score')) || 0;
+let clickMultiplier = parseInt(localStorage.getItem('clickMultiplier')) || 1;
+let autoClicker = parseInt(localStorage.getItem('autoClicker')) || 0;
+
+const scoreDisplay = document.getElementById('score');
+const coaster = document.getElementById('coaster');
+const multiplierBtn = document.getElementById('multiplier');
+const autoBtn = document.getElementById('autoClicker');
+const tripleBtn = document.getElementById('tripleClick');
+const megaBtn = document.getElementById('megaClick');
+const superAutoBtn = document.getElementById('superAuto');
+const ultraClickBtn = document.getElementById('ultraClick');
+const ultraAutoBtn = document.getElementById('ultraAuto');
+const prestigeBtn = document.getElementById('prestigeBtn');
+const prestigeInfo = document.getElementById('prestigeInfo');
+
+// Upgrade purchase state (0 = not bought, 1 = bought)
+let upgrades = JSON.parse(localStorage.getItem('upgrades')) || {
+  double: 0,
+  triple: 0,
+  mega: 0,
+  ultra: 0,
+  auto: 0,
+  superAuto: 0,
+  ultraAuto: 0
+};
+
+// Prestige state
+let prestigeLevel = parseInt(localStorage.getItem('prestigeLevel')) || 0;
+
+// --- Clicker Achievements ---
+const clickerAchievements = [
+  { id: 'ticketHolder', name: 'Ticket Holder', desc: 'Get your first click.' },
+  { id: 'firstRide', name: 'First Ride Launched', desc: 'Reach 100 clicks.' },
+  { id: 'rideOperator', name: 'Ride Operator', desc: 'Reach 1,000 clicks.' },
+  { id: 'fullTrain', name: 'Full Train', desc: 'Unlock your first upgrade.' },
+  { id: 'thrillSeeker', name: 'Thrill Seeker', desc: 'Click 500 times in one session.' },
+  { id: 'fastTrack', name: 'Fast Track', desc: 'Reach 5,000 clicks.' },
+  { id: 'parkExpansion', name: 'Park Expansion', desc: 'Buy 5 upgrades.' },
+  { id: 'coasterTycoon', name: 'Coaster Tycoon', desc: 'Reach 50,000 clicks.' },
+  { id: 'bestPie', name: 'Best Pie Secret', desc: 'Unlock by typing “best pie” in the secret Easter egg.' },
+  { id: 'ultimateOperator', name: 'Ultimate Operator', desc: 'Unlock all clicker game achievements.' }
+];
+let clickerAchState = JSON.parse(localStorage.getItem('clickerAchievements') || '{}');
+let sessionClicks = 0;
+
+function saveUpgrades() {
+  localStorage.setItem('upgrades', JSON.stringify(upgrades));
+}
+
+// Update prestige info display
+function showPrestigeInfo() {
+  prestigeInfo.textContent = `Prestige Level: ${prestigeLevel} | Permanent Click Bonus: +${prestigeLevel}`;
+}
+
+// Calculate clickMultiplier and autoClicker based on upgrades (no stacking), plus prestige bonus
+function recalcUpgrades() {
+  clickMultiplier = 1 + prestigeLevel;
+  if (upgrades.double) clickMultiplier *= 2;
+  if (upgrades.triple) clickMultiplier *= 3;
+  if (upgrades.mega) clickMultiplier *= 5;
+  if (upgrades.ultra) clickMultiplier *= 10;
+  autoClicker = 0;
+  if (upgrades.auto) autoClicker += 1;
+  if (upgrades.superAuto) autoClicker += 10;
+  if (upgrades.ultraAuto) autoClicker += 50;
+  localStorage.setItem('clickMultiplier', clickMultiplier);
+  localStorage.setItem('autoClicker', autoClicker);
+}
+
+// Show owned upgrades
+function showUpgradesOwned() {
+  let html = '<span>Upgrades Owned: ';
+  let arr = [];
+  if (upgrades.double) arr.push(`Double Clicks`);
+  if (upgrades.triple) arr.push(`Triple Clicks`);
+  if (upgrades.mega) arr.push(`Mega Clicks`);
+  if (upgrades.ultra) arr.push(`Ultra Clicks`);
+  if (upgrades.auto) arr.push(`Auto-Ride`);
+  if (upgrades.superAuto) arr.push(`Super Auto-Ride`);
+  if (upgrades.ultraAuto) arr.push(`Ultra Auto-Ride`);
+  html += arr.length ? arr.join(', ') : 'None';
+  html += '</span>';
+  document.getElementById('upgradesOwned').innerHTML = html;
+
+  // Disable purchased upgrade buttons
+  multiplierBtn.disabled = !!upgrades.double;
+  tripleBtn.disabled = !!upgrades.triple;
+  megaBtn.disabled = !!upgrades.mega;
+  ultraClickBtn.disabled = !!upgrades.ultra;
+  autoBtn.disabled = !!upgrades.auto;
+  superAutoBtn.disabled = !!upgrades.superAuto;
+  ultraAutoBtn.disabled = !!upgrades.ultraAuto;
+}
+
+// ------------------ SCORE DISPLAY ------------------
+function updateScoreDisplay() {
+  scoreDisplay.textContent = `Rides Completed: ${score}`;
+  checkMilestone();
+  showUpgradesOwned();
+  showPrestigeInfo();
+  if (score >= 25000000 && !window._thankYouShown) {
+    window._thankYouShown = true;
+    setTimeout(() => {
+      alert("Thank you for actually playing and reaching 25,000,000 rides! 🎉");
+    }, 100);
+  }
+}
+
+// ------------------ CLICK HANDLER ------------------
+coaster.addEventListener('click', () => {
+  score += clickMultiplier;
+  sessionClicks++;
+  localStorage.setItem('score', score);
+  updateScoreDisplay();
+  checkClickerAchievements();
+});
+
+// ------------------ UPGRADES ------------------
+function handleUpgradePurchase(upgradeFn) {
+  upgradeFn();
+  checkClickerAchievements();
+}
+multiplierBtn.addEventListener('click', () => handleUpgradePurchase(() => {
+  if(score >= 50 && !upgrades.double) {
+    score -= 50;
+    upgrades.double = 1;
+    saveUpgrades();
+    recalcUpgrades();
+    localStorage.setItem('score', score);
+    updateScoreDisplay();
+    alert(`Click power doubled!`);
+  } else if (upgrades.double) {
+    alert('Already purchased!');
+  } else alert('Not enough rides!');
+}));
+autoBtn.addEventListener('click', () => handleUpgradePurchase(() => {
+  if(score >= 100 && !upgrades.auto) {
+    score -= 100;
+    upgrades.auto = 1;
+    saveUpgrades();
+    recalcUpgrades();
+    localStorage.setItem('score', score);
+    updateScoreDisplay();
+    alert(`Auto-Ride purchased!`);
+  } else if (upgrades.auto) {
+    alert('Already purchased!');
+  } else alert('Not enough rides!');
+}));
+tripleBtn.addEventListener('click', () => handleUpgradePurchase(() => {
+  if(score >= 500 && !upgrades.triple) {
+    score -= 500;
+    upgrades.triple = 1;
+    saveUpgrades();
+    recalcUpgrades();
+    localStorage.setItem('score', score);
+    updateScoreDisplay();
+    alert(`Click power tripled!`);
+  } else if (upgrades.triple) {
+    alert('Already purchased!');
+  } else alert('Not enough rides!');
+}));
+megaBtn.addEventListener('click', () => handleUpgradePurchase(() => {
+  if(score >= 2000 && !upgrades.mega) {
+    score -= 2000;
+    upgrades.mega = 1;
+    saveUpgrades();
+    recalcUpgrades();
+    localStorage.setItem('score', score);
+    updateScoreDisplay();
+    alert(`Mega Clicks! Click power x5!`);
+  } else if (upgrades.mega) {
+    alert('Already purchased!');
+  } else alert('Not enough rides!');
+}));
+superAutoBtn.addEventListener('click', () => handleUpgradePurchase(() => {
+  if(score >= 5000 && !upgrades.superAuto) {
+    score -= 5000;
+    upgrades.superAuto = 1;
+    saveUpgrades();
+    recalcUpgrades();
+    localStorage.setItem('score', score);
+    updateScoreDisplay();
+    alert(`Super Auto-Ride! +10 auto rides per second!`);
+  } else if (upgrades.superAuto) {
+    alert('Already purchased!');
+  } else alert('Not enough rides!');
+}));
+ultraClickBtn.addEventListener('click', () => handleUpgradePurchase(() => {
+  if(score >= 20000 && !upgrades.ultra) {
+    score -= 20000;
+    upgrades.ultra = 1;
+    saveUpgrades();
+    recalcUpgrades();
+    localStorage.setItem('score', score);
+    updateScoreDisplay();
+    alert(`Ultra Clicks! Click power x10!`);
+  } else if (upgrades.ultra) {
+    alert('Already purchased!');
+  } else alert('Not enough rides!');
+}));
+ultraAutoBtn.addEventListener('click', () => handleUpgradePurchase(() => {
+  if(score >= 50000 && !upgrades.ultraAuto) {
+    score -= 50000;
+    upgrades.ultraAuto = 1;
+    saveUpgrades();
+    recalcUpgrades();
+    localStorage.setItem('score', score);
+    updateScoreDisplay();
+    alert(`Ultra Auto-Ride! +50 auto rides per second!`);
+  } else if (upgrades.ultraAuto) {
+    alert('Already purchased!');
+  } else alert('Not enough rides!');
+}));
+
+// ------------------ PRESTIGE ------------------
+prestigeBtn.addEventListener('click', () => {
+  if (score < 10000) {
+    alert('You need at least 10,000 rides to prestige!');
+    return;
+  }
+  if (confirm(`Are you sure you want to Prestige?\n\n- Your rides will reset to 0\n- You keep all upgrades\n- You gain +1 permanent click power\n\nThis cannot be undone!`)) {
+    prestigeLevel += 1;
+    score = 0;
+    localStorage.setItem('score', score);
+    localStorage.setItem('prestigeLevel', prestigeLevel);
+    recalcUpgrades();
+    showUpgradesOwned();
+    showPrestigeInfo();
+    updateScoreDisplay();
+    createFirework();
+    setTimeout(() => {
+      alert(`Prestige complete! You are now Prestige Level ${prestigeLevel}.\nEnjoy your permanent +${prestigeLevel} click power!`);
+    }, 200);
+  }
+});
+
+// ------------------ RESET POINTS ------------------
+resetPointsBtn.addEventListener('click', () => {
+  if (confirm('Are you sure you want to reset ALL your progress? This cannot be undone.')) {
+    score = 0;
+    clickMultiplier = 1;
+    autoClicker = 0;
+    upgrades = {
+      double: 0,
+      triple: 0,
+      mega: 0,
+      ultra: 0,
+      auto: 0,
+      superAuto: 0,
+      ultraAuto: 0
+    };
+    localStorage.setItem('score', score);
+    localStorage.setItem('clickMultiplier', clickMultiplier);
+    localStorage.setItem('autoClicker', autoClicker);
+    localStorage.setItem('upgrades', JSON.stringify(upgrades));
+    // Reset clicker achievements
+    clickerAchState = {};
+    localStorage.setItem('clickerAchievements', JSON.stringify(clickerAchState));
+    recalcUpgrades();
+    showUpgradesOwned();
+    updateScoreDisplay();
+  }
+});
+
+// --- Best Pie Secret achievement (listen for localStorage or global event) ---
+window.addEventListener('storage', function(e) {
+  if (e.key === 'bestPieSecret' && e.newValue === 'unlocked') {
+    unlockClickerAchievement('bestPie');
+  }
+});
+// If the secret is set in this tab
+if (localStorage.getItem('bestPieSecret') === 'unlocked') {
+  unlockClickerAchievement('bestPie');
+}
+
+// ------------------ AUTO-CLICKER ------------------
+setInterval(() => {
+  score += autoClicker * clickMultiplier;
+  localStorage.setItem('score', score);
+  updateScoreDisplay();
+  checkClickerAchievements();
+}, 1000);
+
+// --- Clicker Achievement Triggers ---
+function checkClickerAchievements() {
+  if (score >= 1) unlockClickerAchievement('ticketHolder');
+  if (score >= 100) unlockClickerAchievement('firstRide');
+  if (score >= 1000) unlockClickerAchievement('rideOperator');
+  if (score >= 5000) unlockClickerAchievement('fastTrack');
+  if (score >= 50000) unlockClickerAchievement('coasterTycoon');
+  // Park Expansion: Buy 5 upgrades
+  const upgradesCount = Object.values(upgrades).reduce((a, b) => a + (b ? 1 : 0), 0);
+  if (upgradesCount >= 5) unlockClickerAchievement('parkExpansion');
+  // Full Train: Unlock your first upgrade
+  if (upgradesCount >= 1) unlockClickerAchievement('fullTrain');
+  // Thrill Seeker: 500 clicks in one session
+  if (sessionClicks >= 500) unlockClickerAchievement('thrillSeeker');
+}
+
+// --- Clicker Achievement Unlocking ---
+function unlockClickerAchievement(id) {
+  if (!clickerAchState[id]) {
+    clickerAchState[id] = true;
+    localStorage.setItem('clickerAchievements', JSON.stringify(clickerAchState));
+    const ach = clickerAchievements.find(a => a.id === id);
+    if (ach) showClickerAchPopup(ach.name, ach.desc);
+    // Ultimate Operator
+    if (id !== 'ultimateOperator' && clickerAchievements.filter(a => a.id !== 'ultimateOperator').every(a => clickerAchState[a.id])) {
+      unlockClickerAchievement('ultimateOperator');
+    }
+  }
+}
+
+function showClickerAchPopup(title, desc) {
+  let popup = document.createElement('div');
+  popup.style.position = 'fixed';
+  popup.style.bottom = '30px';
+  popup.style.right = '30px';
+  popup.style.background = '#222';
+  popup.style.color = '#fff';
+  popup.style.padding = '18px 28px';
+  popup.style.borderRadius = '12px';
+  popup.style.boxShadow = '0 4px 16px rgba(0,0,0,0.3)';
+  popup.style.zIndex = 99999;
+  popup.style.fontSize = '1.1rem';
+  popup.innerHTML = `<b>🏆 Achievement Unlocked!</b><br>${title}<br><span style="font-size:0.9rem;">${desc}</span>`;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 3500);
+}
+
+// ------------------ MILESTONES ------------------
+function checkMilestone(){
+  if(score % 100 === 0 && score > 0){
+    createFirework();
+  }
+}
+
+// ------------------ INITIALIZE ------------------
+recalcUpgrades();
+showUpgradesOwned();
+showPrestigeInfo();
+updateScoreDisplay();
+</script>
+
+
+
+</body>
+</html>

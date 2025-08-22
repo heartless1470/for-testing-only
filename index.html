@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌟 East Pie Thanks! 🌟</title>
+  <style>
+    /* Reset & basic styling */
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #8EC5FC, #E0C3FC);
+      color: #333;
+      text-align: center;
+    }
+    header {
+      padding: 40px 20px;
+    }
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+    header p {
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      color: #fff;
+    }
+    .features {
+      padding: 30px 20px;
+    }
+    .features h2 {
+      margin-bottom: 20px;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    .btn {
+      display: block;
+      padding: 15px;
+      text-decoration: none;
+      font-weight: bold;
+      background-color: #fff;
+      color: #8EC5FC;
+      border-radius: 12px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: #f0f0f0;
+    }
+    footer {
+      padding: 20px;
+      font-size: 0.9rem;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌟 Thank You, East Pie Team! 🌟</h1>
+    <p>
+      Working with all of you this summer has been one of the most memorable experiences of my life. 
+      Each day spent in East Pie was filled with laughter, teamwork, and moments that I will never forget. 
+      I have learned so much from each of you, not just about the work, but about dedication, 
+      kindness, and the spirit of fun that makes this place special.
+    </p>
+    <p>
+      I want to take a moment to thank every single person I had the chance to work with. 
+      From the first day to the last, you made me feel like part of a family. 
+      I think of everyone here not just as coworkers, but as close friends, and I hope we can all 
+      carry these memories with us for years to come.
+    </p>
+    <p>
+      This little website is my way of saying “thank you” and giving us a place to remember the 
+      fun times, share laughs, and celebrate the amazing team that East Pie is. 
+      I hope you enjoy exploring it as much as I enjoyed making it for all of you.
+    </p>
+    <p>
+      <strong>
+        This is just the start! I planned a whole bunch of stuff to add, but that's just what I want to do—so please let me know what you all want to see.
+      </strong>
+    </p>
+  </header>
+
+  <main>
+    <section class="features">
+      <h2>Explore the Fun!</h2>
+      <div class="buttons">
+        <a href="jokes.html" class="btn">😂 Funny Jokes</a>
+        <a href="polls.html" class="btn">📊 Mini Polls</a>
+        <a href="achievements.html" class="btn">🏆 Achievements</a>
+        <a href="click-coaster.html" class="btn">🎢 Click Coaster</a>
+        <a href="memory-game.html" class="btn">🎠 Memory Game</a>
+      </div>
+    </section>
+
+    <section class="easter-egg" style="margin-top: 30px;">
+      <p style="color: #fff;">Type something here for a surprise:</p>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <input type="text" id="eggInput" placeholder="east pie ..." style="padding: 10px; border-radius: 8px;">
+        <button id="eggBtn" class="btn" style="margin-top: 10px;">Check</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Made with ❤️ for East Pie Crew</p>
+  </footer>
+
+  <script>
+    // script.js - shared JS for your site
+    console.log("East Pie site loaded");
+
+    const eggInput = document.getElementById('eggInput');
+    const eggBtn = document.getElementById('eggBtn');
+
+    eggBtn.addEventListener('click', () => {
+      const val = eggInput.value.trim().toLowerCase();
+      if(val === 'best pie') {
+        // Unlock Best Pie Secret achievement
+        localStorage.setItem('bestPieSecret', 'unlocked');
+        // Redirect to fireworks page
+        window.location.href = 'fireworks.html';
+      } else {
+        alert('Keep trying! 😉');
+      }
+    });
+  </script>
+</body>
+</html>
